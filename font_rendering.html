@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="matrix" class="font-matrix"></div>
+    <script>
+        function getTextPixels(text, font, background="#fff", foreground="#000") {
+            const canvas = new OffscreenCanvas(100, 20)
+            const ctx = canvas.getContext("2d")
+
+            ctx.font = font
+            ctx.fillStyle = foreground
+            ctx.imageSmoothingEnabled = true
+            const realDimensions = ctx.measureText(text)
+            
+            canvas.width = Math.ceil(realDimensions.width)
+            canvas.height = Math.ceil(realDimensions.fontBoundingBoxDescent + realDimensions.fontBoundingBoxAscent)
+
+            ctx.fillStyle = background
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+            ctx.font = font
+            ctx.fillStyle = foreground
+            ctx.imageSmoothingEnabled = true
+            ctx.fillText(text, 0, realDimensions.fontBoundingBoxAscent)
+
+            const image = ctx.getImageData(0, 0, canvas.width, canvas.height, { colorSpace: "srgb" })
+            
+            return image
+        }
+
+        function drawPixels(image) {
+            const matrix = document.querySelector("#matrix")
+            
+            for(let y = 0; y < image.height; y++) {
+                const rowElem = document.createElement("div")
+                rowElem.className = "font-matrix-row"
+
+                for(let x = 0; x < image.width; x++) {
+                    const arrayBase = ((y * image.width) + x) * 4
+
+                    const pixelElem = document.createElement("div")
+                    pixelElem.className = "font-matrix-pixel"
+
+                    pixelElem.style.backgroundColor = `rgba(${image.data[arrayBase]}, ${image.data[arrayBase + 1]}, ${image.data[arrayBase + 2]}, ${image.data[arrayBase + 3]})`
+
+                    rowElem.appendChild(pixelElem)
+                }
+
+                matrix.appendChild(rowElem)
+            }
+        }
+
+        const getRandomFont = () => ["sans-serif", "serif", "monospace", "system-ui"][Math.floor(Math.random() * 4)]
+        const getRandomFontSize = () => Math.floor((Math.random() * 10) + 12) + "px"
+        const getRandomFontStyle = () => `${getRandomFontSize()} ${getRandomFont()}`
+
+        const getURL = () => window.origin === "null" ? "https://ppluss.de" : window.origin
+        const getRandomText = () => ["ich besteh' nur aus divs", "hewwo world", getURL(), "Vorsicht Zugverkehr", "ähhhh"][Math.floor(Math.random() * 5)]
+
+        drawPixels(getTextPixels(getRandomText(), getRandomFontStyle()))
+    </script>
+    <style>
+        .font-matrix {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            
+            .font-matrix-row {
+                display: flex;
+                flex-direction: row;
+                width: 90vw;
+                max-width: 1000px;
+            }
+
+            .font-matrix-pixel {
+                flex-grow: 1;
+                aspect-ratio: 1;
+            }
+        }
+
+        body {
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+
+            overflow: hidden;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+    </style>
+</body>
+</html>
